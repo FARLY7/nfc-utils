@@ -32,12 +32,15 @@
  */
 #include "ndef.h"
 
-
 /*
  * @brief Convert from network to local endianness.
+ * 
+ * @param[in] ptr : Pointer to 4-byte value to convert.
+ *
+ * @return Converted value.
  */
-static uint32_t ntohl(uint8_t *ptr);
 
+static uint32_t ntohl(uint8_t *ptr);
 
 /*
  * @brief This API accepts a raw byte buffer and parses into NDEF records.
