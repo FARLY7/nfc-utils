@@ -33,141 +33,57 @@
 #include "tlv.h"
 
 /*
- * @brief This API accepts a raw byte buffer and parses into TLV structure representation.
+ * @brief This API parses the next found TLV in the buffer.
  */
-tlv_status_t tlv_decode(uint8_t *buf, size_t len, tlv_t *tlv, size_t tlv_cnt)
+tlv_status_t tlv_get_next(uint8_t *buf, size_t len, tlv_t *tlv, size_t *br)
 {
-    int8_t rslt = TLV_OK;
-
-    tlv_t tlv[10];
-    uint8_t cnt = 0;
-
     if((buf == NULL) || (len == 0))
-    {
-        rslt = TLV_E_INVALID_ARGS;
-        goto error;
-    } 
+        return TLV_E_INVALID_ARGS;
 
     uint8_t *buf_start = buf;
 
-    while ((buf - buf_start) < len)
+    if((*buf == TLV_TYPE_NULL) || (*buf == TLV_TYPE_TERMINATOR))
     {
-        switch (*buf)
-        {
-            case TLV_TYPE_NULL:
-            {
-                tlv->type = *buf++;
-                tlv->length = 0;
-                tlv->value = 0;
-                break;
-            }
-            case TLV_TYPE_LOCK_CONTROL:
-            {
-                if (*buf != TLV_LEN_LOCK_CONTROL)
-                {
-                    rslt = TLV_E_FORMAT;
-                    goto error;
-                }
-
-                tlv->type = *buf++;
-                tlv->length = *buf++;
-                tlv->value = buf;
-
-                buf += tlv->length;
-                break;
-            }
-            case TLV_TYPE_MEM_CONTROL:
-            {
-                if (*buf != TLV_LEN_MEM_CONTROL)
-                {
-                    rslt = TLV_E_FORMAT;
-                    goto error;
-                }
-
-                tlv->type = *buf++;
-                tlv->length = *buf++;
-                tlv->value = buf;
-
-                buf += tlv->length;
-                break;
-            }
-            case TLV_TYPE_NDEF_MESSAGE:
-            {
-                tlv->type = *buf++;
-
-                if (*buf == 0xFF)
-                {
-                    /* Long record? */
-                    tlv->length = ((*(buf + 1) << 8) & 0xFF00) | ((*(buf + 2) << 0) & 0x00FF);
-                    buf += 3; /* Replace with #define */
-                }
-                else
-                {
-                    /* Short record */
-                    tlv->length = *buf++;
-                }
-
-                tlv->value  = buf++;
-                break;
-            }
-            case TLV_TYPE_PROPRIETARY:
-            {
-                tlv->type = *buf++;
-
-                if (*buf == 0xFF)
-                {
-                    /* Long record? */
-                    tlv->length = ((*(buf + 1) << 8) & 0xFF00) | ((*(buf + 2) << 0) & 0x00FF);
-                    buf += 3; /* Replace with #define */
-                }
-                else
-                {
-                    /* Short record */
-                    tlv->length = *buf++;
-                }
-
-                tlv->value  = buf++;
-                break;
-            }
-            case TLV_TYPE_TERMINATOR:
-            {
-                tlv->type = *buf++;
-                tlv->length = 0;
-                tlv->value = 0;
-
-                /* Now finished parsing */
-                rslt = TLV_OK;
-                goto error;
-            }
-            default:
-            {
-                rslt = TLV_E_FORMAT;
-                goto error;
-            }
-
-            cnt++;
-            tlv++;
-
-            if(cnt > tlv_cnt)
-            {
-                rslt = TLV_E_NO_SPACE;
-                goto error;
-            }
-        }
+        tlv->type   = *buf++;
+        tlv->length = 0;
+        tlv->value  = 0;            
     }
+    else if((*buf == TLV_TYPE_LOCK_CONTROL) || (*buf == TLV_TYPE_MEM_CONTROL))
+    {
+        /* Length field should equal 3 in LOCK TLV */
+        if(buf[1] != TLV_LEN_CONTROL_TYPE)
+            return TLV_E_FORMAT;
 
-error:
-    return rslt;
-}
+        tlv->type   = *buf++;
+        tlv->length = *buf++;
+        tlv->value  = buf;
+    }
+    else if((*buf == TLV_TYPE_NDEF_MESSAGE) || (*buf == TLV_TYPE_PROPRIETARY))
+    {
+        tlv->type = *buf++;
 
+        if (*buf == 0xFF)
+        {
+            /* Long record? */
+            tlv->length = (*(buf + 1) << 8) & 0xFF00 | *(buf + 2);
+            buf += 3;
+        }
+        else
+        {
+            /* Short record */
+            tlv->length = *buf++;
+        }
 
-/*
- * @brief This API converts a TLV structure representation into raw byte buffer.
- */ 
-tlv_status_t tlv_encode(uint8_t *buf, uint8_t type, uint32_t length, uint8_t *value, uint32_t len)
-{
-    tlv_status_t rslt = TLV_OK;
-
-error:
-    return rslt;
+        tlv->value = buf;
+    }
+    else
+    {
+        *br = 1;
+        return TLV_E_NOT_FOUND;
+    }
+    
+    buf += tlv->length;
+    *br = buf_start - buf;
+    
+    return TLV_OK;
 }

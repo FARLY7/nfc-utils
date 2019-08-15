@@ -45,7 +45,6 @@ extern "C" {
 #include <stdint.h>
 #include <stddef.h>
 
-
 /*!
  * @brief NDEF record header flags.
  */
@@ -73,46 +72,40 @@ extern "C" {
 /*!
  * @brief NDEF API status code.
  */
-typedef enum {
-    NDEF_OK,
-    NDEF_E_INVALID_ARGS,
-    NDEF_E_FORMAT
+typedef enum
+{
+    NDEF_OK,             /* API execution succes        */
+    NDEF_E_INVALID_ARGS, /* Invalid fucntion parameters */
+    NDEF_E_FORMAT        /* Invalid NDEF format         */
 } ndef_status_t;
 
 /*!
  * @brief NDEF record structure.
  */
-typedef struct {
-
+typedef struct
+{
     uint8_t  header;
     uint8_t  type_len;
-    uint32_t payload_len;
+    size_t   payload_len;
     uint8_t  id_len;
     uint8_t  *type;
     uint8_t  *id;
     uint8_t  *payload;
     /* Extra field for driver */
     size_t   totalLength;
-    
 } ndef_record_t;
 
-
 /*
- * @brief This API accepts a raw byte buffer and parses into NDEF records.
+ * @brief This API parses the next NDEF record found in the buffer.
  * 
- * @param[in]     buf : Pointer to byte buffer containing ndef message.
+ * @param[in]     buf : Pointer to byte buffer containing ndef message(s).
  * @param[in]     len : Length of byte buffer.
- * @param[out]    rec : Pointer to NDEF record(s) buffer in which to save parsed NDEF records.
- * @param[in] rec_cnt : Number of NDEF records available in rec buffer.
+ * @param[out]    rec : Pointer to NDEF record(s) buffer in which to save parsed NDEF record.
+ * @param[in] rec_cnt : Number of bytes read from bufer.
  *
  * @return API status code.
  */
-ndef_status_t ndef_parse(uint8_t *buf, size_t len, ndef_record_t *rec, size_t rec_cnt);
-
-
-//uint8_t* NDEF_BuildRecord(uint8_t flags, uint8_t *type, uint8_t typeLength, uint8_t *id, uint8_t idLength, uint8_t *payload, uint32_t payloadLength);
-//void NDEF_PrintRecord(NDEF_RecordType *rec);
-//void NDEF_PrintMessage(NDEF_MessageType *msg);
+ndef_status_t ndef_get_next(uint8_t *buf, size_t len, ndef_record_t *rec, size_t *br);
 
 #ifdef __cplusplus
 }

@@ -54,40 +54,27 @@ extern "C" {
 #define TLV_TYPE_TERMINATOR         0xFEU
 
 /* TLV length values */
-#define TLV_LEN_NULL                0x00U
-#define TLV_LEN_LOCK_CONTROL        0x03U
-#define TLV_LEN_MEM_CONTROL         0x03U
-#define TLV_LEN_TERMINATOR          0x00U
+#define TLV_LEN_CONTROL_TYPE        0x03U
 
 /*!
  * @brief TLV API status codes.
  */
-typedef enum {
-    /* Success */
-    TLV_OK,
-    /* Invalid function arguments */
-    TLV_E_INVALID_ARGS,
-    /* Error in parsing tlv */
-    TLV_E_FORMAT,
-    /* No space in TLV buffer */
-    TLV_E_NO_SPACE
+typedef enum 
+{
+    TLV_OK,             /* Success                    */
+    TLV_E_INVALID_ARGS, /* Invalid function arguments */
+    TLV_E_FORMAT,       /* Error in parsing tlv       */
+    TLV_E_NOT_FOUND     /* No space in TLV buffer     */
 } tlv_status_t;
-
 
 /*!
  * @brief TLV structure.
  */
-typedef struct {
-
-    /* TLV Type field */
-    uint8_t type;
-    
-    /* TLV length field */
-    size_t  length;
-
-    /* TLV value data */
-    uint8_t *value;
-
+typedef struct
+{
+    uint8_t type;   /* TLV Type field   */
+    size_t  length; /* TLV length field */
+    uint8_t *value; /* TLV value data   */
 } tlv_t;
 
 
@@ -101,7 +88,7 @@ typedef struct {
  *
  * @return API status code.
  */
-tlv_status_t tlv_decode(uint8_t *buf, size_t len, tlv_t *tlv, size_t tlv_cnt);
+tlv_status_t tlv_get_next(uint8_t *buf, size_t len, tlv_t *tlv, size_t *br)
 
 /*
  * @brief This API converts a TLV structure representation into raw byte buffer.

@@ -43,95 +43,55 @@
 static uint32_t ntohl(uint8_t *ptr);
 
 /*
- * @brief This API accepts a raw byte buffer and parses into NDEF records.
+ * @brief This API parses the next NDEF record found in the buffer.
  */
-ndef_status_t ndef_parse(uint8_t *buf, size_t len, ndef_record_t *rec, size_t rec_cnt)
+ndef_status_t ndef_get_next(uint8_t *buf, size_t len, ndef_record_t *rec, size_t *br)
 {
-    ndef_status_t rslt = NDEF_OK;
-
     /* Check parameters are valid */
-    if((buf == NULL) || (len == 0) || (rec == NULL) || (rec_cnt == 0))
-    {
-        rslt = NDEF_E_INVALID_ARGS;
-        goto error;
-    }
+    if((buf == NULL) || (len == 0) || (rec == NULL) || (br == 0))
+        return NDEF_E_INVALID_ARGS;
 
-    /* Check the first record is valid with a Message Begin flag set */
-    if (NDEF_RECORD_GET_FLAG(*buf, NDEF_RECORD_FLAG_MB) == 0)
-    {
-        rslt = NDEF_E_FORMAT;
-        goto error;
-    }
+    /* Check the NDEF record has at least the MB or ME set for validity */
+    if (NDEF_RECORD_GET_FLAG(*buf, NDEF_RECORD_FLAG_MB) == 0 &&
+        NDEF_RECORD_GET_FLAG(*buf, NDEF_RECORD_FLAG_ME) == 0)
+        return NDEF_E_FORMAT;
 
     uint8_t *buf_start = buf;
-    size_t cnt = 0;
 
-    while((buf - buf_start) < len)
+    rec->header  = *buf++;
+    rec->type_len = *buf++;
+    
+    if (NDEF_RECORD_GET_FLAG(rec->header, NDEF_RECORD_FLAG_SR))
     {
-        rec->header  = *buf++;
-        rec->type_len = *buf++;
-        
-        if (NDEF_RECORD_GET_FLAG(rec->header, NDEF_RECORD_FLAG_SR))
-        {
-            /* NDEF record is a 'short' sized record, copy the 1-byte 'Paylod Length' field */
-            rec->payload_len = *buf++;
-        }
-        else
-        {
-            /* NDEF record is a 'normal' sized record, copy the 4-byte 'Payload Length' field */
-            rec->payload_len = ntohl(buf);
-            buf += sizeof(uint32_t);
-        }
-
-        if(NDEF_RECORD_GET_FLAG(rec->header, NDEF_RECORD_FLAG_IL))
-            rec->id_len = *buf++;
-        else
-            rec->id_len = 0;
-
-
-        rec->type = (rec->type_len == 0) ? NULL : buf;
-        buf += rec->type_len;
-
-        rec->id = (rec->id_len == 0) ? NULL : buf;
-        buf += rec->id_len;
-
-        rec->payload = (rec->payload_len == 0) ? NULL : buf;
-        buf += rec->payload_len;
-
-        rec->totalLength = buf - buf_start;
-
-        /* Found Message Begin in the middle of record */
-        if(NDEF_RECORD_GET_FLAG(rec->header, NDEF_RECORD_FLAG_MB) && (cnt > 0))
-        {
-            rslt = NDEF_E_FORMAT;
-            goto error;
-        }
-
-        /* Is record last in message with Message Eng flag */
-        if (NDEF_RECORD_GET_FLAG(rec->header, NDEF_RECORD_FLAG_ME))
-        {
-            rslt = NDEF_OK;
-            goto error;
-        }
-
-        rec++;
-        cnt++;
-
-        if(cnt > rec_cnt)
-        {
-            rslt = NDEF_E_FORMAT;
-            goto error;
-        }
+        /* NDEF record is a 'short' sized record, copy the 1-byte 'Paylod Length' field */
+        rec->payload_len = *buf++;
+    }
+    else
+    {
+        /* NDEF record is a 'normal' sized record, copy the 4-byte 'Payload Length' field */
+        rec->payload_len = ntohl(buf);
+        buf += sizeof(uint32_t);
     }
 
-    if(NDEF_RECORD_GET_FLAG(rec->header, NDEF_RECORD_FLAG_ME))
-    {
-        rslt = NDEF_OK;
-        goto error;
-    }
+    if(NDEF_RECORD_GET_FLAG(rec->header, NDEF_RECORD_FLAG_IL))
+        rec->id_len = *buf++;
+    else
+        rec->id_len = 0;
 
-error:
-    return rslt;
+    rec->type = (rec->type_len == 0) ? NULL : buf;
+    buf += rec->type_len;
+
+    rec->id = (rec->id_len == 0) ? NULL : buf;
+    buf += rec->id_len;
+
+    rec->payload = (rec->payload_len == 0) ? NULL : buf;
+    buf += rec->payload_len;
+
+    rec->totalLength = buf - buf_start;
+
+    *br = rec->totalLength;
+
+    return NDEF_OK;
 }
 
 
