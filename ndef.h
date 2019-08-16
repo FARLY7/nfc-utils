@@ -54,30 +54,41 @@ extern "C" {
 #define NDEF_RECORD_FLAG_SR             (1 << 4)    /* SR: Short Record */
 #define NDEF_RECORD_FLAG_IL             (1 << 3)    /* IL: ID Length field present*/
 #define NDEF_RECORD_FLAG_TNF_Msk        (7 << 0)    /* TNF Mask */
-#define NDEF_RECORD_FLAG_TNF_EMPTY      (0 << 0)    /* TNF: Empty */
-#define NDEF_RECORD_FLAG_TNF_WELLKNOWN  (1 << 0)    /* TNF: NFC Forum well-known type [NFC RTD] */
-#define NDEF_RECORD_FLAG_TNF_MEDIA      (2 << 0)    /* TNF: Media-type as defined in RFC 2046 */
-#define NDEF_RECORD_FLAG_TNF_URI        (3 << 0)    /* TNF: Absolute URI as defined in RFC 3986 */
-#define NDEF_RECORD_FLAG_TNF_EXTERNAL   (4 << 0)    /* TNF: NFC Forum external type [NFC RTD] */
-#define NDEF_RECORD_FLAG_TNF_UNKNOWN    (5 << 0)    /* TNF: Unknown */
-#define NDEF_RECORD_FLAG_TNF_UNCHANGED  (6 << 0)    /* TNF: Unchanged */
-#define NDEF_RECORD_FLAG_TNF_RESERVED   (7 << 0)    /* TNF: Reserved */
+// #define NDEF_RECORD_FLAG_TNF_EMPTY      (0 << 0)    /* TNF: Empty */
+// #define NDEF_RECORD_FLAG_TNF_WELLKNOWN  (1 << 0)    /* TNF: NFC Forum well-known type [NFC RTD] */
+// #define NDEF_RECORD_FLAG_TNF_MEDIA      (2 << 0)    /* TNF: Media-type as defined in RFC 2046 */
+// #define NDEF_RECORD_FLAG_TNF_URI        (3 << 0)    /* TNF: Absolute URI as defined in RFC 3986 */
+// #define NDEF_RECORD_FLAG_TNF_EXTERNAL   (4 << 0)    /* TNF: NFC Forum external type [NFC RTD] */
+// #define NDEF_RECORD_FLAG_TNF_UNKNOWN    (5 << 0)    /* TNF: Unknown */
+// #define NDEF_RECORD_FLAG_TNF_UNCHANGED  (6 << 0)    /* TNF: Unchanged */
+// #define NDEF_RECORD_FLAG_TNF_RESERVED   (7 << 0)    /* TNF: Reserved */
 
 /*!
  * @brief NDEF Record flag check macro.
  */
 #define NDEF_RECORD_GET_FLAG(__BYTE__, __FLAG__)     ((((__BYTE__) & (__FLAG__)) == (__FLAG__)) ? 1 : 0)
 
-
 /*!
  * @brief NDEF API status code.
  */
 typedef enum
 {
-    NDEF_OK,             /* API execution succes        */
-    NDEF_E_INVALID_ARGS, /* Invalid fucntion parameters */
-    NDEF_E_FORMAT        /* Invalid NDEF format         */
+    NDEF_OK,             /* API execution succes            */
+    NDEF_E_NOT_FOUND,     /* Parser did not find NDEF record */
+    NDEF_E_INVALID_ARGS /* Invalid fucntion parameters     */
 } ndef_status_t;
+
+typedef enum
+{
+    TNF_EMPTY,          /* The value indicates that there is no type or payload associated with this record. */
+    TNF_WELL_KNOWN,     /* NFC Forum well-known type [NFC RTD].                                              */
+    TNF_MEDIA_TYPE,     /* Media-type as defined in RFC 2046 [RFC 2046].                                     */
+    TNF_ABSOLUTE_URI,   /* Absolute URI as defined in RFC 3986 [RFC 3986].                                   */
+    TNF_EXTERNAL_TYPE,  /* NFC Forum external type [NFC RTD].                                                */
+    TNF_UNKNOWN_TYPE,   /* The value indicates that there is no type associated with this record.            */
+    TNF_UNCHANGED,      /* The value is used for the record chunks used in chunked payload.                  */
+    TNF_RESERVED        /* The value is reserved for future use.                                             */
+} ndef_record_tnf_t;
 
 /*!
  * @brief NDEF record structure.
@@ -92,20 +103,19 @@ typedef struct
     uint8_t  *id;
     uint8_t  *payload;
     /* Extra field for driver */
-    size_t   totalLength;
+    size_t   total_length;
 } ndef_record_t;
 
 /*
  * @brief This API parses the next NDEF record found in the buffer.
  * 
  * @param[in]     buf : Pointer to byte buffer containing ndef message(s).
- * @param[in]     len : Length of byte buffer.
  * @param[out]    rec : Pointer to NDEF record(s) buffer in which to save parsed NDEF record.
  * @param[in] rec_cnt : Number of bytes read from bufer.
  *
  * @return API status code.
  */
-ndef_status_t ndef_get_next(uint8_t *buf, size_t len, ndef_record_t *rec, size_t *br);
+ndef_status_t ndef_parse_next(uint8_t *buf, ndef_record_t *rec, size_t *br);
 
 #ifdef __cplusplus
 }

@@ -45,16 +45,12 @@ extern "C" {
 #include <stdint.h>
 #include <stddef.h>
 
-/* TLV type values */
-#define TLV_TYPE_NULL               0x00U
-#define TLV_TYPE_LOCK_CONTROL       0x01U
-#define TLV_TYPE_MEM_CONTROL        0x02U
-#define TLV_TYPE_NDEF_MESSAGE       0x03U
-#define TLV_TYPE_PROPRIETARY        0xFDU
-#define TLV_TYPE_TERMINATOR         0xFEU
-
-/* TLV length values */
-#define TLV_LEN_CONTROL_TYPE        0x03U
+#define TLV_T_LENGTH                1       /* Length of tag field.                                             */
+#define TLV_L_SHORT_LENGTH          1       /* Length of a short length field.                                  */
+#define TLV_L_LONG_LENGTH           3       /* Length of an extended length field.                              */
+#define TLV_L_FORMAT_FLAG           0xFF    /* Value indicating the use of an extended length field.            */
+#define TLV_NULL_TERMINATOR_LEN     0       /* Predefined length of the NULL and TERMINATOR TLV blocks.         */
+#define TLV_LOCK_MEMORY_CTRL_LEN    3       /* Prefefined length of the LOCK CONTROL and MEMORY CONTROL blocks. */
 
 /*!
  * @brief TLV API status codes.
@@ -62,49 +58,46 @@ extern "C" {
 typedef enum 
 {
     TLV_OK,             /* Success                    */
+    TLV_E_NOT_FOUND,     /* No TLV found by parser     */
     TLV_E_INVALID_ARGS, /* Invalid function arguments */
-    TLV_E_FORMAT,       /* Error in parsing tlv       */
-    TLV_E_NOT_FOUND     /* No space in TLV buffer     */
 } tlv_status_t;
+
+/*!
+ * @brief TLV block types
+ */
+typedef enum
+{
+    TLV_NULL            = 0x00, /* Might be used for padding of memory areas. */
+    TLV_LOCK_CONTROL    = 0x01, /* Defines details of the lock bits.          */     
+    TLV_MEMORY_CONTROL  = 0x02, /* Identifies reserved memory areas.          */
+    TLV_NDEF_MESSAGE    = 0x03, /* Contains an NDEF message.                  */
+    TLV_PROPRIETARY     = 0xFD, /* Tag proprietary information.               */
+    TLV_TERMINATOR      = 0xFE  /* Last TLV block in the data area.           */
+} tlv_types_t;
 
 /*!
  * @brief TLV structure.
  */
 typedef struct
 {
-    uint8_t type;   /* TLV Type field   */
-    size_t  length; /* TLV length field */
-    uint8_t *value; /* TLV value data   */
+    uint8_t type;   /* Type of the TLV block  */
+    size_t  length; /* Length of the value field */
+    uint8_t *value; /* Pointer to the value field (NULL if no value field is present) */
 } tlv_t;
 
-
 /*
- * @brief This API accepts a raw byte buffer and parses into TLV structure representation.
+ * @brief This API parses the next TLV block found in the byte-buffer.
  * 
- * @param[in]     buf : Pointer to byte buffer containing TLV data.
- * @param[in]     len : Length of byte buffer.
- * @param[out]    tlv : Pointer to TLV(s) buffer in which to save parsed TLVs.
- * @param[in] tlv_cnt : Number of TLV(s) available in tlv buffer.
+ * @param[in]  buf : Pointer to byte buffer containing TLV data.
+ * @param[out] tlv : Pointer to structure that will be filled with parsed data.
+ * @param[out] br  : Pointer to value which will store number of bytes read.
  *
  * @return API status code.
  */
-tlv_status_t tlv_get_next(uint8_t *buf, size_t len, tlv_t *tlv, size_t *br)
+tlv_status_t type_2_tag_parse(uint8_t *buf, tlv_t *tlv, size_t *br);
 
-/*
- * @brief This API converts a TLV structure representation into raw byte buffer.
- * 
- * @param[in]     buf : Pointer to byte buffer to save TLV.
- * @param[in]    type : Value type.
- * @param[in]  length : Length of value.
- * @param[in]   value : Pointer to value data.
- *
- * @return API status code.
- */
-tlv_status_t tlv_encode(uint8_t *buf, uint8_t type, uint32_t length, uint8_t *value);
+void type_2_tag_print_tlv(tlv_t *tlv);
 
-
-// TLV_StatusTypeDef NFC_TLV_ParseNDEF(uint8_t *buf, size_t len, TLV_TypeDef *tlv);
-// void NFC_TLV_PrintTLV(TLV_TypeDef *tlv);
 
 #ifdef __cplusplus
 }

@@ -33,39 +33,39 @@
 #include "tlv.h"
 
 /*
- * @brief This API parses the next found TLV in the buffer.
+ * @brief This API parses the next TLV block found in the byte-buffer.
  */
-tlv_status_t tlv_get_next(uint8_t *buf, size_t len, tlv_t *tlv, size_t *br)
+tlv_status_t type_2_tag_parse(uint8_t *buf, tlv_t *tlv, size_t *br)
 {
-    if((buf == NULL) || (len == 0))
+    if((buf == NULL) || (tlv == NULL) || (br == NULL))
         return TLV_E_INVALID_ARGS;
 
     uint8_t *buf_start = buf;
 
-    if((*buf == TLV_TYPE_NULL) || (*buf == TLV_TYPE_TERMINATOR))
+    if((*buf == TLV_NULL) || (*buf == TLV_TERMINATOR))
     {
         tlv->type   = *buf++;
         tlv->length = 0;
         tlv->value  = 0;            
     }
-    else if((*buf == TLV_TYPE_LOCK_CONTROL) || (*buf == TLV_TYPE_MEM_CONTROL))
+    else if((*buf == TLV_LOCK_CONTROL) || (*buf == TLV_MEMORY_CONTROL))
     {
-        /* Length field should equal 3 in LOCK TLV */
-        if(buf[1] != TLV_LEN_CONTROL_TYPE)
-            return TLV_E_FORMAT;
+        /* Length field should equal 3 for LOCK CONTROL and MEMORY CONTROL blocks. */
+        if(buf[1] != TLV_LOCK_MEMORY_CTRL_LEN)
+            return TLV_E_NOT_FOUND;
 
         tlv->type   = *buf++;
         tlv->length = *buf++;
         tlv->value  = buf;
     }
-    else if((*buf == TLV_TYPE_NDEF_MESSAGE) || (*buf == TLV_TYPE_PROPRIETARY))
+    else if((*buf == TLV_NDEF_MESSAGE) || (*buf == TLV_PROPRIETARY))
     {
         tlv->type = *buf++;
 
         if (*buf == 0xFF)
         {
             /* Long record? */
-            tlv->length = (*(buf + 1) << 8) & 0xFF00 | *(buf + 2);
+            tlv->length = ((*(buf + 1) << 8) & 0xFF00) | *(buf + 2);
             buf += 3;
         }
         else
