@@ -115,7 +115,7 @@ typedef struct
  *
  * @return API status code.
  */
-ndef_status_t ndef_parse_next(uint8_t *buf, ndef_record_t *rec, size_t *br);
+ndef_status_t ndef_parse_next_rec(uint8_t *buf, ndef_record_t *rec, size_t *br);
 
 #ifdef __cplusplus
 }

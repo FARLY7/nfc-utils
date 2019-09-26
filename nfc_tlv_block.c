@@ -30,12 +30,12 @@
 /*! @file tlv.c
  * @brief Utility tools for TLV format.
  */
-#include "tlv.h"
+#include "nfc_tlv_block.h"
 
 /*
  * @brief This API parses the next TLV block found in the byte-buffer.
  */
-tlv_status_t type_2_tag_parse(uint8_t *buf, tlv_t *tlv, size_t *br)
+tlv_status_t t2t_parse_next_tlv(uint8_t *buf, tlv_t *tlv, size_t *br)
 {
     if((buf == NULL) || (tlv == NULL) || (br == NULL))
         return TLV_E_INVALID_ARGS;

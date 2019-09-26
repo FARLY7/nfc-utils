@@ -30,22 +30,12 @@
 /*! @file ndef.c
  * @brief Utility tools for NDEF format.
  */
-#include "ndef.h"
-
-/*
- * @brief Convert from network to local endianness.
- * 
- * @param[in] ptr : Pointer to 4-byte value to convert.
- *
- * @return Converted value.
- */
-
-static uint32_t ntohl(uint8_t *ptr);
+#include "nfc_ndef.h"
 
 /*
  * @brief This API parses the next NDEF record found in the buffer.
  */
-ndef_status_t ndef_parse_next(uint8_t *buf, ndef_record_t *rec, size_t *br)
+ndef_status_t ndef_parse_next_rec(uint8_t *buf, ndef_record_t *rec, size_t *br)
 {
     /* Check parameters are valid */
     if((buf == NULL) || (rec == NULL) || (br == 0))
@@ -220,15 +210,7 @@ ndef_status_t ndef_parse_next(uint8_t *buf, ndef_record_t *rec, size_t *br)
 //     Log_info("============================");
 // }
 
-static uint32_t ntohl(uint8_t *ptr) 
-{
-    uint32_t temp = 0;
 
-    temp |= ((*ptr++ << 24) & 0xFF000000);
-    temp |= ((*ptr++ << 16) & 0x00FF0000);
-    temp |= ((*ptr++ << 8)  & 0x0000FF00);
-    temp |= ((*ptr++ << 0)  & 0x000000FF);
 
-    return temp;
-}    
+    
     

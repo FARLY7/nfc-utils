@@ -34,8 +34,8 @@
 /*!
  * @defgroup TLV API
  */
-#ifndef _TLV_H_
-#define _TLV_H_
+#ifndef _NFC_TLV_H_
+#define _NFC_TLV_H_
 
 /*! CPP guard */
 #ifdef __cplusplus
@@ -94,9 +94,10 @@ typedef struct
  *
  * @return API status code.
  */
-tlv_status_t type_2_tag_parse(uint8_t *buf, tlv_t *tlv, size_t *br);
+tlv_status_t t2t_parse_next_tlv(uint8_t *buf, tlv_t *tlv, size_t *br);
 
-void type_2_tag_print_tlv(tlv_t *tlv);
+
+void t2t_print_tlv(tlv_t *tlv);
 
 
 #ifdef __cplusplus
